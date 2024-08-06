@@ -66,7 +66,7 @@ function Register() {
       {loading && <CircularProgress />}
       {error && <Typography color="error">{error}</Typography>}
       <Typography variant="h4" gutterBottom>
-        Register
+       
       </Typography>
       <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '1000px', maxHeight: '700px', overflowY: 'auto' }}>
         <TextField
