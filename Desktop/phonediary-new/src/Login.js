@@ -4,7 +4,7 @@ import { Button, TextField, Typography, Container } from '@mui/material';
 import './login.css';
 
 function Login() {
-  const [email, setEmail] = useState(''); // Change to email
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -13,13 +13,9 @@ function Login() {
     setError('');
 
     if (email && password) {
-      // Replace this with your own login logic
-      if (email === 'admin@example.com' && password === 'password') { // Example validation
-        localStorage.setItem('user', JSON.stringify({ email })); // Store user info in localStorage
-        window.location.href = '/todo-list'; // Redirect to the ToDoList page or your desired page
-      } else {
-        setError('Invalid email or password.');
-      }
+      // Allow login with any email and password
+      localStorage.setItem('user', JSON.stringify({ email })); // Store user info in localStorage
+      window.location.href = '/todo-list'; // Redirect to the ToDoList page or your desired page
     } else {
       setError('Please enter email and password.');
     }
@@ -38,9 +34,9 @@ function Login() {
             margin="normal"
             required
             fullWidth
-            name="email" // Adjusted to email
+            name="email"
             label="Email"
-            type="email" // Adjusted to email type
+            type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"

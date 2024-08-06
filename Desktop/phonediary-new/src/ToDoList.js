@@ -1,212 +1,167 @@
-import React, { useState, useEffect, useRef } from 'react';
-import './todo.css';
-import ReminderModal from './ReminderModal';
-import {
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  Container,
-  CssBaseline,
-  Box,
-  Typography,
-  Paper,
-  AppBar,
-  Toolbar,
-  IconButton
-} from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import SearchIcon from '@mui/icons-material/Search';
+import React, { useState, useEffect } from 'react';
+import initSqlJs from 'sql.js';
+import { Container, Typography, TextField, Button, List, ListItem, ListItemText, IconButton, Select, MenuItem, InputLabel, FormControl, Box, AppBar, Toolbar } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import UndoIcon from '@mui/icons-material/Undo';
 import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import { useNavigate } from 'react-router-dom';
-import { fetchTasks, insertTask, deleteTask } from './db';
+import SearchIcon from '@mui/icons-material/Search';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import './todo.css';
 
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-});
+// Function to initialize the SQLite database
+export const initializeDatabase = async () => {
+  const SQL = await initSqlJs({
+    locateFile: file => `https://sql.js.org/dist/${file}`,
+  });
+  const db = new SQL.Database();
+  db.run(`CREATE TABLE IF NOT EXISTS todos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task TEXT,
+    completed BOOLEAN,
+    priority TEXT
+  )`);
+  return db;
+};
 
-function ToDoList({ onLogout }) {
-  const navigate = useNavigate();
-  const [tasks, setTasks] = useState([]);
-  const [opened, setOpened] = useState(false);
-  const [isReminderOpen, setIsReminderOpen] = useState(false);
-  const [currentTask, setCurrentTask] = useState(null);
+// TodoList component
+const TodoList = () => {
+  const navigate = useNavigate(); // Use useNavigate for navigation
+  const [db, setDb] = useState(null);
+  const [todos, setTodos] = useState([]);
+  const [newTask, setNewTask] = useState('');
+  const [priority, setPriority] = useState('Medium');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const taskTitle = useRef('');
-  const taskSummary = useRef('');
-  const taskDateTime = useRef('');
-  const taskPriority = useRef('Medium');
-
+  // Setup database and load todos when component mounts
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const tasks = await fetchTasks();
-        setTasks(tasks);
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-      }
+    const setupDb = async () => {
+      const db = await initializeDatabase();
+      setDb(db);
+      loadTodos(db);
     };
-    fetchData();
+    setupDb();
   }, []);
 
-  const handleCreateTask = async () => {
-    const newTask = {
-      title: taskTitle.current.value,
-      summary: taskSummary.current.value,
-      dateTime: taskDateTime.current.value,
-      priority: taskPriority.current.value,
-    };
-    try {
-      await insertTask(newTask.title, newTask.summary, newTask.dateTime, newTask.priority);
-      const updatedTasks = await fetchTasks();
-      setTasks(updatedTasks);
-      setOpened(false);
-    } catch (error) {
-      console.error('Error creating task:', error);
+  // Function to load todos from the database
+  const loadTodos = (db) => {
+    const stmt = db.prepare('SELECT * FROM todos');
+    const rows = [];
+    while (stmt.step()) {
+      rows.push(stmt.getAsObject());
+    }
+    setTodos(rows);
+  };
+
+  // Function to add a new todo
+  const addTodo = () => {
+    if (newTask.trim()) {
+      db.run('INSERT INTO todos (task, completed, priority) VALUES (?, ?, ?)', [newTask, false, priority]);
+      loadTodos(db);
+      setNewTask('');
+      setPriority('Medium');
     }
   };
 
-  const handleDeleteTask = async (taskId) => {
-    try {
-      await deleteTask(taskId);
-      const updatedTasks = await fetchTasks();
-      setTasks(updatedTasks);
-    } catch (error) {
-      console.error('Error deleting task:', error);
-    }
+  // Function to toggle completion status of a todo
+  const toggleTodo = (id, completed) => {
+    db.run('UPDATE todos SET completed = ? WHERE id = ?', [!completed, id]);
+    loadTodos(db);
   };
 
-  const filteredTasks = tasks.filter(task =>
-    task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    task.summary.toLowerCase().includes(searchTerm.toLowerCase())
+  // Function to delete a todo
+  const deleteTodo = (id) => {
+    db.run('DELETE FROM todos WHERE id = ?', [id]);
+    loadTodos(db);
+  };
+
+  // Function to filter todos based on search term
+  const filteredTodos = todos.filter(todo =>
+    todo.task.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date().toISOString().slice(0, 16);
-      tasks.forEach((task) => {
-        if (task.dateTime === now) {
-          setCurrentTask(task);
-          setIsReminderOpen(true);
-        }
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [tasks]);
-
-  const closeReminderModal = () => {
-    setIsReminderOpen(false);
-    setCurrentTask(null);
-  };
 
   return (
-    <ThemeProvider theme={darkTheme}>
-      <CssBaseline />
-      <Container component="main">
-        <AppBar position="static">
-          <Toolbar>
-            <Button color="inherit" onClick={onLogout}>Logout</Button>
-            <Button color="inherit" onClick={() => navigate('/profile')}>Profile</Button>
-            <Button color="inherit" onClick={() => navigate('/')}>Home</Button>
-          </Toolbar>
-        </AppBar>
-        <Box display="flex" flexDirection="column" alignItems="center">
-          <TextField
-            variant="outlined"
-            margin="normal"
-            fullWidth
-            placeholder="Search tasks..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              endAdornment: <SearchIcon />,
-            }}
-          />
-          {opened && (
-            <Paper elevation={3} sx={{ padding: 2, margin: 2 }}>
-              <Typography component="h2" variant="h5">New Task</Typography>
-              <TextField
-                inputRef={taskTitle}
-                label="Title"
-                fullWidth
-                margin="normal"
-                required
-              />
-              <TextField
-                inputRef={taskSummary}
-                label="Summary"
-                fullWidth
-                margin="normal"
-              />
-              <TextField
-                inputRef={taskDateTime}
-                label="Date and Time"
-                type="datetime-local"
-                fullWidth
-                margin="normal"
-                required
-                InputLabelProps={{ shrink: true }}
-              />
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Priority</InputLabel>
-                <Select
-                  inputRef={taskPriority}
-                  label="Priority"
-                  defaultValue="Medium"
-                >
-                  <MenuItem value="Low">Low</MenuItem>
-                  <MenuItem value="Medium">Medium</MenuItem>
-                  <MenuItem value="High">High</MenuItem>
-                </Select>
-              </FormControl>
-              <Box display="flex" justifyContent="flex-end">
-                <Button
-                  onClick={handleCreateTask}
-                  variant="contained"
-                  color="primary"
-                  startIcon={<AddIcon />}
-                >
-                  Add Task
-                </Button>
-              </Box>
-            </Paper>
-          )}
-          {filteredTasks.map(task => (
-            <Paper key={task.id} elevation={3} sx={{ padding: 2, margin: 2, width: '100%' }}>
-              <Typography component="h3" variant="h6">{task.title}</Typography>
-              <Typography>{task.summary}</Typography>
-              <Typography>{task.dateTime}</Typography>
-              <Typography>{task.priority}</Typography>
-              <Box display="flex" justifyContent="flex-end">
-                <IconButton onClick={() => handleDeleteTask(task.id)} color="secondary">
+    <Container className="todo-container">
+      <AppBar position="static">
+        <Toolbar>
+          <Button color="inherit" onClick={() => navigate('/login')}>Logout</Button>
+          <Button color="inherit" onClick={() => navigate('/profile')}>Profile</Button>
+          <Button color="inherit" onClick={() => navigate('/')}>Home</Button>
+        </Toolbar>
+      </AppBar>
+      <Typography variant="h4" gutterBottom>
+        To-Do List
+      </Typography>
+      <TextField
+        label="Search tasks"
+        variant="outlined"
+        fullWidth
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        margin="normal"
+        InputProps={{
+          endAdornment: <SearchIcon />,
+        }}
+      />
+      <Box display="flex" flexDirection="column" gap={2}>
+        <TextField
+          label="New task"
+          variant="outlined"
+          fullWidth
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          margin="normal"
+        />
+        <FormControl fullWidth margin="normal">
+          <InputLabel>Priority</InputLabel>
+          <Select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+            label="Priority"
+          >
+            <MenuItem value="Low">Low</MenuItem>
+            <MenuItem value="Medium">Medium</MenuItem>
+            <MenuItem value="High">High</MenuItem>
+          </Select>
+        </FormControl>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={addTodo}
+          fullWidth
+        >
+          Add Task
+        </Button>
+      </Box>
+      <List>
+        {filteredTodos.map(todo => (
+          <ListItem
+            key={todo.id}
+            secondaryAction={
+              <>
+                <IconButton edge="end" onClick={() => toggleTodo(todo.id, todo.completed)}>
+                  {todo.completed ? <UndoIcon /> : <CheckCircleIcon />}
+                </IconButton>
+                <IconButton edge="end" onClick={() => deleteTodo(todo.id)}>
                   <DeleteIcon />
                 </IconButton>
-              </Box>
-            </Paper>
-          ))}
-        </Box>
-        <Box display="flex" justifyContent="center" m={2}>
-          <Button
-            onClick={() => setOpened(true)}
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
+              </>
+            }
+            className={`task-card ${todo.priority.toLowerCase()}`}
           >
-            Add Task
-          </Button>
-        </Box>
-        {isReminderOpen && currentTask && (
-          <ReminderModal task={currentTask} onClose={closeReminderModal} />
-        )}
-      </Container>
-    </ThemeProvider>
+            <ListItemText
+              primary={todo.task}
+              secondary={todo.completed ? "Completed" : "Pending"}
+              primaryTypographyProps={{ style: { textDecoration: todo.completed ? 'line-through' : 'none' } }}
+            />
+          </ListItem>
+        ))}
+      </List>
+    </Container>
   );
-}
+};
 
-export default ToDoList;
+export default TodoList;
+
+
+
+

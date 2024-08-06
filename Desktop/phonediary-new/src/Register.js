@@ -1,6 +1,9 @@
+// src/Register.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { TextField, Button, CircularProgress, Typography, Box } from '@mui/material';
 import './register.css';
+import { addUser } from './db'; // Import the function to add a user
 
 function Register() {
   const navigate = useNavigate();
@@ -46,83 +49,142 @@ function Register() {
     e.preventDefault();
     setError('');
 
-    // Basic validation
-    if (!userData.email.includes('@')) {
-      setError('Email must contain @');
-      return;
-    }
-
-    if (!/^\d{10}$/.test(userData.phoneNumber)) {
-      setError('Phone number must be 10 digits');
-      return;
-    }
-
-    if (userData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return;
-    }
-
+    // Save user data without validation for simplicity
     setLoading(true);
     try {
-      // Check if email already exists
-      const response = await fetch(`http://localhost:3000/users?email=${encodeURIComponent(userData.email)}`);
-      const existingUsers = await response.json();
-
-      if (existingUsers.length > 0) {
-        setError('You already have an account.');
-      } else {
-        // Register new user
-        const registerResponse = await fetch('http://localhost:3000/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(userData),
-        });
-        const result = await registerResponse.json();
-
-        if (result.error) {
-          setError(result.error);
-        } else {
-          navigate('/login');
-        }
-      }
+      addUser(userData); // Add the user to the database
+      navigate('/login'); // Navigate to login page upon successful registration
     } catch (error) {
-      console.error('Error adding user:', error);
-      // Enhanced error handling
-      if (error.response) {
-        // Server responded with a status other than 200 range
-        setError(`Error: ${error.response.data.error || 'Server error'}`);
-      } else if (error.request) {
-        // Request was made but no response received
-        setError('No response from server. Please try again later.');
-      } else {
-        // Something else happened
-        setError('An unexpected error occurred.');
-      }
+      console.error('Error during registration:', error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="register-container">
-      {loading && <div className="loader">Loading...</div>}
-      {error && <div className="error-message">{error}</div>}
-      <form onSubmit={handleSubmit}>
-        <input type="text" name="name" value={userData.name} onChange={handleChange} placeholder="Name" required />
-        <input type="text" name="surname" value={userData.surname} onChange={handleChange} placeholder="Surname" required />
-        <input type="text" name="gender" value={userData.gender} onChange={handleChange} placeholder="Gender" required />
-        <input type="date" name="dob" value={userData.dob} onChange={handleChange} placeholder="Date of Birth" required />
-        <input type="text" name="country" value={userData.country} onChange={handleChange} placeholder="Country" required />
-        <input type="text" name="occupation" value={userData.occupation} onChange={handleChange} placeholder="Occupation" required />
-        <input type="tel" name="phoneNumber" value={userData.phoneNumber} onChange={handleChange} placeholder="Phone Number" required />
-        <input type="email" name="email" value={userData.email} onChange={handleChange} placeholder="Email" required />
-        <input type="text" name="interests" value={userData.interests} onChange={handleChange} placeholder="Interests" required />
-        <input type="password" name="password" value={userData.password} onChange={handleChange} placeholder="Password" required />
-        <input type="file" accept="image/*" onChange={handleFileChange} />
-        <button type="submit">Register</button>
-      </form>
+    <div className="register-screen">
+      {loading && <CircularProgress />}
+      {error && <Typography color="error">{error}</Typography>}
+      <Typography variant="h4" gutterBottom>
+        Register
+      </Typography>
+      <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '1000px', maxHeight: '700px', overflowY: 'auto' }}>
+        <TextField
+          label="Name"
+          name="name"
+          value={userData.name}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          required
+        />
+        <TextField
+          label="Surname"
+          name="surname"
+          value={userData.surname}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          required
+        />
+        <TextField
+          label="Gender"
+          name="gender"
+          value={userData.gender}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          required
+        />
+        <TextField
+          label="Date of Birth"
+          name="dob"
+          type="date"
+          value={userData.dob}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          InputLabelProps={{ shrink: true }}
+          required
+        />
+        <TextField
+          label="Country"
+          name="country"
+          value={userData.country}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          required
+        />
+        <TextField
+          label="Occupation"
+          name="occupation"
+          value={userData.occupation}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          required
+        />
+        <TextField
+          label="Phone Number"
+          name="phoneNumber"
+          type="tel"
+          value={userData.phoneNumber}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          required
+        />
+        <TextField
+          label="Email"
+          name="email"
+          type="email"
+          value={userData.email}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          required
+        />
+        <TextField
+          label="Interests"
+          name="interests"
+          value={userData.interests}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          required
+        />
+        <TextField
+          label="Password"
+          name="password"
+          type="password"
+          value={userData.password}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          required
+        />
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          style={{ marginTop: '1rem' }}
+        />
+        <Button type="submit" variant="contained" color="primary" sx={{ marginTop: '1rem' }}>
+          Register
+        </Button>
+      </Box>
     </div>
   );
 }
 
 export default Register;
+
+
+
+
+
+
+
+
+

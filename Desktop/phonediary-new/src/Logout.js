@@ -12,10 +12,11 @@ function Logout({ onLogout }) {
       setLoading(true); // Set loading state to true
 
       // Simulate server request delay
+      // Remove or adjust setTimeout as needed
       setTimeout(() => {
         onLogout(); // Call the onLogout function
         setLoading(false); // Reset loading state
-        navigate('/'); // Navigate to home page
+        navigate('/login'); // Navigate to login page
       }, 2000); // Adjust timeout as needed
     } catch (error) {
       console.error('Error logging out:', error);

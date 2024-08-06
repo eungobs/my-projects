@@ -4,6 +4,26 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// Load the WebAssembly module
+const loadWasm = async () => {
+  try {
+    const response = await fetch('/db/todo.wasm'); // Ensure this path is correct
+    const buffer = await response.arrayBuffer();
+    const { instance } = await WebAssembly.instantiate(buffer);
+    return instance.exports;
+  } catch (error) {
+    console.error('Error loading WebAssembly:', error);
+  }
+};
+
+loadWasm().then((wasm) => {
+  if (wasm) {
+    wasm._init();
+    wasm._add_task('Sample Task', 'This is a sample task', 1);
+    console.log('Number of tasks:', wasm._get_task_count());
+  }
+});
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
@@ -11,7 +31,4 @@ root.render(
   </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();

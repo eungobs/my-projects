@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Container, Button, TextField, Avatar, Grid, Box } from '@mui/material';
 import { styled } from '@mui/system';
+import { fetchUserProfile, updateUserProfile } from './db'; // Import the DB functions
 
 
-// Styled components
 const ProfileContainer = styled(Container)({
   display: 'flex',
   flexDirection: 'column',
@@ -24,12 +24,10 @@ const ProfileContainer = styled(Container)({
   },
 });
 
-
 const ProfileImageContainer = styled('div')({
   position: 'relative',
   marginBottom: '24px',
 });
-
 
 const ProfileImage = styled(Avatar)({
   width: '120px',
@@ -47,7 +45,6 @@ const ProfileImage = styled(Avatar)({
   },
 });
 
-
 const ProfileImageInput = styled('input')({
   position: 'absolute',
   top: 0,
@@ -58,18 +55,15 @@ const ProfileImageInput = styled('input')({
   cursor: 'pointer',
 });
 
-
 const SaveButton = styled(Button)({
   marginTop: '16px',
   width: '100%',
 });
 
-
 const BackButton = styled(Button)({
   alignSelf: 'flex-start',
   marginBottom: '16px',
 });
-
 
 function Profile() {
   const { id } = useParams(); // Get user ID from URL
@@ -87,25 +81,15 @@ function Profile() {
     profileImage: '',
   });
 
-
   useEffect(() => {
-    // Retrieve profile data from local storage
-    const storedData = JSON.parse(localStorage.getItem(`profile_${id}`));
-    if (storedData) {
-      setUserData(storedData);
+    // Retrieve profile data from database
+    const profile = fetchUserProfile(id);
+    if (profile) {
+      setUserData(profile);
     } else {
-      // Fetch user data from the server if not available in local storage
-      fetch(`http://localhost:3000/users/${id}`)
-        .then(response => response.json())
-        .then(data => {
-          setUserData(data);
-          // Optionally store fetched data in local storage
-          localStorage.setItem(`profile_${id}`, JSON.stringify(data));
-        })
-        .catch(error => console.error('Error fetching user:', error));
+      console.error('User not found');
     }
   }, [id]);
-
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -114,7 +98,6 @@ function Profile() {
       [name]: value,
     }));
   };
-
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -130,27 +113,15 @@ function Profile() {
     }
   };
 
-
   const handleSave = () => {
-    // Save profile data to local storage
-    localStorage.setItem(`profile_${id}`, JSON.stringify(userData));
-
-
-    // Optionally update on the server
-    fetch(`http://localhost:3000/users/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
-    })
-      .then(() => alert('Profile updated successfully!'))
-      .catch(error => console.error('Error updating profile:', error));
+    // Save profile data to the database
+    updateUserProfile(id, userData);
+    alert('Profile updated successfully!');
   };
-
 
   const handleBackClick = () => {
     navigate('/todo-list');
   };
-
 
   return (
     <ProfileContainer>
@@ -251,7 +222,7 @@ function Profile() {
               value={userData.interests}
               onChange={handleInputChange}
               fullWidth
-              />
+            />
           </Grid>
         </Grid>
       </Box>
@@ -261,6 +232,5 @@ function Profile() {
     </ProfileContainer>
   );
 }
+
 export default Profile;
-
-
