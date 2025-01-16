@@ -2,27 +2,35 @@
   "users": [
     {
       "id": 1,
-      "name": "Tebogo",
-      "email": "tebogo@example.com",
-      "phone": "0123456789",
-      "password": "password123"
+      "name": "John",
+      "surname": "Doe",
+      "gender": "Male",
+      "dob": "1990-01-01",
+      "country": "USA",
+      "occupation": "Developer",
+      "phoneNumber": "1234567890",
+      "email": "john@example.com",
+      "password": "password123",
+      "interests": "Coding, Reading",
+      "profileImage": ""
     }
   ],
   "tasks": [
     {
       "id": 1,
-      "title": "Sample Task",
-      "summary": "This is a sample task.",
-      "dateTime": "2024-01-01T12:00",
-      "priority": "Medium"
+      "title": "Complete project",
+      "summary": "Finish the ToDo list app",
+      "dateTime": "2023-10-15T10:00",
+      "priority": "High",
+      "userId": 1
     },
     {
       "id": 2,
-      "title": "Another Task",
-      "summary": "This is another task.",
-      "dateTime": "2024-01-02T12:00",
-      "priority": "High"
+      "title": "Buy groceries",
+      "summary": "Milk, eggs, bread",
+      "dateTime": "2023-10-16T15:00",
+      "priority": "Medium",
+      "userId": 1
     }
   ]
 }
-
