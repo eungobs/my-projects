@@ -13,8 +13,9 @@ function Register() {
     occupation: '',
     phoneNumber: '',
     email: '',
+    password: '', // Add password field
     interests: '',
-    profileImage: ''
+    profileImage: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -42,6 +43,12 @@ function Register() {
     // Validate phone number length
     if (!/^\d{10}$/.test(userData.phoneNumber)) {
       setError('Phone number must be 10 digits');
+      return;
+    }
+
+    // Validate password length
+    if (userData.password.length < 6) {
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -186,6 +193,14 @@ function Register() {
           value={userData.email}
           onChange={handleChange}
           placeholder="Email"
+          required
+        />
+        <input
+          type="password" // Add password field
+          name="password"
+          value={userData.password}
+          onChange={handleChange}
+          placeholder="Password"
           required
         />
         <input
